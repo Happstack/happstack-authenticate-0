@@ -1,0 +1,28 @@
+Name: demo
+Version: 1.0.0
+License: BSD3
+Copyright: (c) 2011 SeeReason Partners LLC
+Author: Jeremy Shaw <jeremy@seereason.com>
+Stability: Experimental
+Category: Web
+Synopsis: A demo of the happstack-authenticate library
+Description:
+ happstack-authenticate supports user account authentication using OpenId or plain old username + password.
+Cabal-version: >= 1.8
+Build-type: Simple
+
+Executable demo-server
+ Main-Is: Main.hs
+
+ GHC-Options: -threaded -Wall -Wwarn -O2 -rtsopts -fno-warn-name-shadowing -fno-warn-missing-signatures -fwarn-tabs -fno-warn-unused-binds -fno-warn-orphans -fwarn-unused-imports -fno-spec-constr
+ Build-depends: acid-state,
+                base < 5,
+                blaze-html,
+                filepath,
+                happstack-authenticate,
+                ixset,
+                happstack-server,
+                mtl,
+                safecopy,
+                text >= 0.11
+
