@@ -1,5 +1,5 @@
 Name:                happstack-authenticate
-Version:             0.10.14
+Version:             0.10.15
 Synopsis:            Happstack Authentication Library
 Description:         A themeable authentication library with support for username+password and OpenId.
 Homepage:            http://www.happstack.com/
@@ -46,8 +46,8 @@ Library
                        mtl                          >= 2.0,
                        pwstore-purehaskell          == 2.1.*,
                        QuickCheck                   >= 2,
-                       text                         >= 0.11 && < 1.2,
-                       time                         >= 1.2 && < 1.5,
+                       text                         >= 0.11 && < 1.3,
+                       time                         >= 1.2 && < 1.6,
                        reform                       == 0.2.*,
                        reform-blaze                 == 0.2.*,
                        reform-happstack             == 0.2.*,

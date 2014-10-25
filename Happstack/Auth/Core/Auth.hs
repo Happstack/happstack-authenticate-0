@@ -543,7 +543,7 @@ addAuthCookie acidH aid authMethod =
        update' acidH (PurgeExpiredTokens now)
        update' acidH (AddAuthToken authToken)
        s <- rqSecure <$> askRq
-       addCookie Session ((mkCookie "authToken" (tokenString authToken)) { secure = s })
+       addCookie (MaxAge $ 3600*24*7*52) ((mkCookie "authToken" (tokenString authToken)) { secure = s })
        return ()
 
 deleteAuthCookie :: (Happstack m, Alternative m) => AcidState AuthState -> m ()
