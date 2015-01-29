@@ -57,7 +57,7 @@ Library
 
 Executable             happstack-authenticate-migrate
   buildable:           False
-  main-is:             Main.hs
+  main-is:             Migrate.hs
   ghc-options:         -threaded -O2 -with-rtsopts=-I0
   build-depends:       base                     >  4   && <  5,
                        acid-state               >= 0.6 && <= 0.13,
