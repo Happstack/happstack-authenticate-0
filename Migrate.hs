@@ -1,4 +1,4 @@
-{-# LANGUAGE OverloadedStrings #-} 
+{-# LANGUAGE OverloadedStrings #-}
 module Main where
 
 import Control.Exception (bracket)
@@ -22,9 +22,9 @@ main :: IO ()
 main =
   bracket (openLocalStateFrom "_state/auth"    initialAuthState)                       closeAcidState $ \auth ->
   bracket (openLocalStateFrom "_state/profile" initialProfileState)                    closeAcidState $ \profile ->
-  bracket (openLocalStateFrom "_new_state/authenticate" initialAuthenticateState)           closeAcidState $ \authenticateState ->
+  bracket (openLocalStateFrom "_new_state/authenticate/core" initialAuthenticateState) closeAcidState $ \authenticateState ->
   bracket (openLocalStateFrom "_new_state/authenticate/password" initialPasswordState) closeAcidState $ \passwordState ->
-  bracket (openLocalStateFrom "_new_state/authenticate/openid" initialOpenIdState)     closeAcidState $ \openIdState ->
+  bracket (openLocalStateFrom "_new_state/authenticate/openId" initialOpenIdState)     closeAcidState $ \openIdState ->
     do as <- query auth    AskAuthState
        ps <- query profile GetProfileState
        let users = map (mkUser as (authUserMap ps)) (IxSet.toList $ profiles ps)
@@ -39,9 +39,11 @@ main =
     insertUser authenticateState passwordState _openIdState (Right (user, Left pw)) =
       do T.putStrLn $ _unUsername $ _username user
          update authenticateState (UpdateUser user)
+         update passwordState (Password.SetPassword (_userId user) pw)
     insertUser authenticateState _passwordState openIdState (Right (user, Right ident)) =
       do T.putStrLn $ _unUsername $ _username user
          update authenticateState (UpdateUser user)
+         update openIdState (AssociateIdentifierWithUserId ident (_userId user))
     insertUser _ _ _ (Left err) = T.putStrLn err
     mkUser :: AuthState -> Map AuthId Profile.UserId -> Profile -> Either Text (User, Either Password.HashedPass Identifier)
     mkUser authState auMap (Profile u@(Profile.UserId i) auths nickName) =
