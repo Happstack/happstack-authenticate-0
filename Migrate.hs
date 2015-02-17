@@ -25,12 +25,14 @@ main =
        do as <- query auth    AskAuthState
           ps <- query profile GetProfileState
           let (Profile.UserId uid) = Profile.nextUserId ps in
-           bracket (openLocalStateFrom "_new_state/authenticate/core" (initialAuthenticateState { Authenticate._nextUserId = Authenticate.UserId uid })) closeAcidState $ \authenticateState ->
-           bracket (openLocalStateFrom "_new_state/authenticate/password" initialPasswordState) closeAcidState $ \passwordState ->
-           bracket (openLocalStateFrom "_new_state/authenticate/openId" initialOpenIdState)     closeAcidState $ \openIdState -> do
+           bracket (openLocalStateFrom "_new_state/authenticate/core" (initialAuthenticateState { Authenticate._nextUserId = Authenticate.UserId uid })) createCheckpointAndClose $ \authenticateState ->
+           bracket (openLocalStateFrom "_new_state/authenticate/password" initialPasswordState) createCheckpointAndClose $ \passwordState ->
+           bracket (openLocalStateFrom "_new_state/authenticate/openId" initialOpenIdState)     createCheckpointAndClose $ \openIdState -> do
              let users = map (mkUser as (authUserMap ps)) (IxSet.toList $ profiles ps)
              mapM_ (insertUser authenticateState passwordState openIdState) users
              Prelude.putStrLn $ "_nextUserId = " ++ show uid
+             as <- query authenticateState GetAuthenticateState
+             Prelude.putStrLn $ "Authenticate._nextUserId = " ++ show (Authenticate._nextUserId as)
              return ()
   where
     insertUser :: AcidState AuthenticateState
