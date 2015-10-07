@@ -5,7 +5,7 @@ import Control.Applicative ((<$>))
 import Control.Monad (msum)
 import Data.Data (Data, Typeable)
 import Happstack.Auth.Core.Auth (AuthId(..))
-import Happstack.Auth.Core.Profile (UserId(..))
+import Data.UserId (UserId(..))
 import Test.QuickCheck (Arbitrary(..), Property, arbitrary, property, oneof)
 
 import Web.Routes

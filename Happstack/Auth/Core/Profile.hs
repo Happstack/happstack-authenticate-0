@@ -24,6 +24,7 @@ import Happstack.Auth.Core.Auth
 import Happstack.Server
 import Web.Routes
 
+{-
 newtype UserId = UserId { unUserId :: Integer }
       deriving (Eq, Ord, Read, Show, Data, Typeable)
 $(deriveSafeCopy 1 'base ''UserId)
@@ -31,6 +32,9 @@ $(deriveSafeCopy 1 'base ''UserId)
 instance PathInfo UserId where
     toPathSegments (UserId i) = toPathSegments i
     fromPathSegments = UserId <$> fromPathSegments
+-}
+import Data.UserId (UserId(..))
+
 
 succUserId :: UserId -> UserId
 succUserId (UserId i) = UserId (succ i)

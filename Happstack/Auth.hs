@@ -13,7 +13,8 @@ module Happstack.Auth
     , handleAuthProfileRouteT
     ) where
 
-import Happstack.Auth.Core.Profile    (UserId(..), getUserId)
+import Data.UserId (UserId(..))
+import Happstack.Auth.Core.Profile    (getUserId)
 import Happstack.Auth.Core.Auth       (AuthState(..))
 import Happstack.Auth.Core.AuthURL    (AuthURL(..))
 import Happstack.Auth.Core.Profile    (ProfileState(..))

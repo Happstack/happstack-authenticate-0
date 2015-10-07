@@ -5,6 +5,7 @@ import Data.Acid           (AcidState)
 import Data.Acid.Advanced  (update', query')
 import           Data.Set  (Set)
 import qualified Data.Set  as Set
+import Data.UserId (UserId)
 import Happstack.Server
 import Happstack.Auth.Core.Auth
 import Happstack.Auth.Core.ProfileURL
