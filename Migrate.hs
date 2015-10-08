@@ -11,6 +11,7 @@ import Data.Monoid ((<>))
 import qualified Data.Set as Set
 import Data.Text (Text, pack)
 import Data.Text.IO as T
+import Data.UserId as Profile
 import Happstack.Auth.Core.Auth as Auth
 import Happstack.Auth.Core.Profile as Profile
 import Happstack.Authenticate.Core as Authenticate
