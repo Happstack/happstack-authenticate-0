@@ -49,7 +49,7 @@ Library
                        pwstore-purehaskell          == 2.1.*,
                        QuickCheck                   >= 2,
                        text                         >= 0.11 && < 1.3,
-                       time                         >= 1.2 && < 1.6,
+                       time                         >= 1.2 && < 1.7,
                        reform                       == 0.2.*,
                        reform-blaze                 == 0.2.*,
                        reform-happstack             == 0.2.*,
