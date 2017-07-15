@@ -42,7 +42,7 @@ Library
                        ixset                        >= 1.0 && < 1.1,
                        happstack-server             >= 6.0 && < 7.5,
                        http-conduit                 >= 1.4 && < 2.2,
-                       http-types                   >= 0.6 && < 0.9,
+                       http-types                   >= 0.6 && < 0.10,
                        fb                           >= 0.13 && < 1.1,
                        safecopy                     >= 0.6,
                        mtl                          >= 2.0,
