@@ -2,9 +2,9 @@ import Control.Lens
 import Data.Set as Set
 import Debian.Debianize
 import Debian.Relation
-import Distribution.Package (PackageName(PackageName))
-import Distribution.PackageDescription (FlagName(FlagName))
-import Data.Version (Version(Version))
+import Debian.Debianize.Prelude
+import Distribution.Package
+import Distribution.PackageDescription
 
 main :: IO ()
 main = performDebianization customize
@@ -14,11 +14,11 @@ main = performDebianization customize
         debianDefaults
         -- These belong in cabal-debian/src/Debian/Debianize/Details.hs.  But as of
         -- cabal-debian 4.31.8 repeating them does no harm.
-        mapCabal (PackageName "happstack-authenticate") (DebBase "happstack-authenticate")
-        splitCabal (PackageName "happstack-authenticate") (DebBase "happstack-authenticate-0") (Version [2] [])
+        mapCabal (mkPackageName "happstack-authenticate") (DebBase "happstack-authenticate")
+        splitCabal (mkPackageName "happstack-authenticate") (DebBase "happstack-authenticate-0") (mkVersion [2])
         -- (debInfo . overrideDebianNameBase) .= Just (DebBase "happstack-authenticate-0")
         (debInfo . sourceFormat) .= Native3
-        (debInfo . flags . cabalFlagAssignments) %= (Set.insert (FlagName "migrate", True))
+        (debInfo . flags . cabalFlagAssignments) %= (Set.insert (mkFlagName "migrate", True))
         doExecutable (BinPkgName "happstack-authenticate-migrate")
                      (InstallFile {execName = "happstack-authenticate-migrate",
                                    sourceDir = Nothing, destDir = Nothing,
