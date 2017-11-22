@@ -14,7 +14,7 @@ main = performDebianization customize
         debianDefaults
         -- These belong in cabal-debian/src/Debian/Debianize/Details.hs.  But as of
         -- cabal-debian 4.31.8 repeating them does no harm.
-        -- (debInfo . overrideDebianNameBase) .= Just (DebBase "happstack-authenticate-0")
+        (debInfo . overrideDebianNameBase) .= Just (DebBase "happstack-auth")
         (debInfo . sourceFormat) .= Native3
         (debInfo . flags . cabalFlagAssignments) %= (Set.insert (mkFlagName "migrate", True))
         doExecutable (BinPkgName "happstack-authenticate-migrate")
