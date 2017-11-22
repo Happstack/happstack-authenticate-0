@@ -1,4 +1,4 @@
-Name:                happstack-authenticate
+Name:                happstack-auth
 Version:             0.11.1
 Synopsis:            Happstack Authentication Library
 Description:         A themeable authentication library with support for username+password and OpenId.
@@ -11,11 +11,6 @@ Copyright:           2011 SeeReason Partners, LLC
 Category:            Web
 Build-type:          Simple
 Cabal-version:       >=1.6
-
-source-repository head
-    type:     darcs
-    subdir:   happstack-authenticate
-    location: http://hub.darcs.net/stepcut/happstack
 
 Flag migrate
  Description: Enable migration tool. Depends on happstack-authenticate >= 2.0

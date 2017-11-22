@@ -1,4 +1,4 @@
-haskell-happstack-authenticate-0 (0.11.1) unstable; urgency=low
+haskell-happstack-auth (0.11.1) unstable; urgency=low
 
   * Renamed package.
   * Use UserId from userid package

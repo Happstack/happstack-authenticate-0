@@ -14,8 +14,6 @@ main = performDebianization customize
         debianDefaults
         -- These belong in cabal-debian/src/Debian/Debianize/Details.hs.  But as of
         -- cabal-debian 4.31.8 repeating them does no harm.
-        mapCabal (mkPackageName "happstack-authenticate") (DebBase "happstack-authenticate")
-        splitCabal (mkPackageName "happstack-authenticate") (DebBase "happstack-authenticate-0") (mkVersion [2])
         -- (debInfo . overrideDebianNameBase) .= Just (DebBase "happstack-authenticate-0")
         (debInfo . sourceFormat) .= Native3
         (debInfo . flags . cabalFlagAssignments) %= (Set.insert (mkFlagName "migrate", True))
