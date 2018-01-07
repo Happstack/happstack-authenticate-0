@@ -25,7 +25,6 @@ pickAuthId authStateH =
          Nothing ->
              do authIds <- case tokenAuthMethod authToken of
                              (AuthIdentifier identifier) -> query' authStateH (IdentifierAuthIds identifier)
-                             (AuthFacebook   facebookId) -> query' authStateH (FacebookAuthIds facebookId)
                 case Set.size authIds of
                   0 -> do authId <- update' authStateH (NewAuthMethod (tokenAuthMethod authToken))
                           update' authStateH (UpdateAuthToken (authToken { tokenAuthId = Just authId }))
@@ -43,7 +42,6 @@ setAuthIdPage authStateH authId =
          (Just authToken) ->
              do authIds <- case tokenAuthMethod authToken of
                              (AuthIdentifier identifier) -> query' authStateH (IdentifierAuthIds identifier)
-                             (AuthFacebook   facebookId) -> query' authStateH (FacebookAuthIds facebookId)
                 if Set.member authId authIds
                    then do update' authStateH (UpdateAuthToken (authToken { tokenAuthId = Just authId }))
                            return True

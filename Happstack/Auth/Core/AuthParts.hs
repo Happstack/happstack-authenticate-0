@@ -14,14 +14,11 @@ import qualified Data.Text               as T
 import           Data.Text               (Text)
 import qualified Data.Text.Lazy          as TL
 import qualified Data.Text.Lazy.Encoding as TL
-import Facebook                          (Credentials, AccessToken(UserAccessToken), getUserAccessTokenStep1, getUserAccessTokenStep2, runFacebookT)
 import Happstack.Server                  (Happstack, Response, lookPairsBS, lookText, seeOther, toResponse, internalServerError)
 import Happstack.Auth.Core.Auth
 import Happstack.Auth.Core.AuthURL
 import Network.HTTP.Conduit       (withManager)
 import Web.Authenticate.OpenId    (Identifier, OpenIdResponse(..), authenticateClaimed, getForwardUrl)
--- import Web.Authenticate.Facebook  (Facebook(..), getAccessToken, getGraphData)
--- import qualified Web.Authenticate.Facebook as Facebook
 import Web.Routes
 
 -- this verifies the identifier
@@ -68,16 +65,6 @@ identifierAddAuthIdsCookie acid identifier =
        addAuthCookie acid authId (AuthIdentifier identifier)
        return authId
 
-facebookAddAuthIdsCookie :: (Happstack m) => AcidState AuthState -> FacebookId -> m (Maybe AuthId)
-facebookAddAuthIdsCookie acid facebookId =
-    do authId <-
-           do authIds <- query' acid (FacebookAuthIds facebookId)
-              case Set.size authIds of
-                1 -> return $ (Just $ head $ Set.toList $ authIds)
-                n -> return $ Nothing
-       addAuthCookie acid authId (AuthFacebook facebookId)
-       return authId
-
 connect :: (Happstack m, MonadRoute m, URL m ~ OpenIdURL) =>
               AuthMode     -- ^ authentication mode
            -> Maybe Text -- ^ realm
@@ -102,36 +89,3 @@ handleOpenId acid realm onAuthURL url =
       (O_Connect authMode)                 ->
           do url <- lookText "url"
              connect authMode realm (TL.toStrict url)
-
-facebookPage :: (Happstack m, MonadRoute m, URL m ~ AuthURL) => Credentials -> AuthMode -> m Response
-facebookPage credentials authMode =
-    do redirectUri <- showURL (A_FacebookRedirect authMode)
-       uri <- liftIO $ withManager $ \m ->
-                runFacebookT credentials m $
-                  getUserAccessTokenStep1 redirectUri []
-       seeOther (T.unpack uri) (toResponse ())
-
-facebookRedirectPage :: (Happstack m, MonadRoute m, URL m ~ AuthURL) =>
-                        AcidState AuthState
-                     -> Credentials
-                     -> Text -- ^ onAuthURL
-                     -> AuthMode
-                     -> m Response
-facebookRedirectPage acidAuth credentials onAuthURL authMode =
-    do redirectUri <- showURL (A_FacebookRedirect authMode)
-       userAccessToken <-
-           liftIO $ withManager $ \m ->
-             runFacebookT credentials m $
-               getUserAccessTokenStep2 redirectUri []
-       case (authMode, userAccessToken) of
-               (LoginMode, UserAccessToken facebookId _ _) ->
-                   do facebookAddAuthIdsCookie acidAuth (FacebookId facebookId)
-                      seeOther (T.unpack onAuthURL) (toResponse ())
-               (AddIdentifierMode, UserAccessToken facebookId _ _) ->
-                   do mAuthId <- getAuthId acidAuth
-                      case mAuthId of
-                        Nothing       -> internalServerError $ toResponse $ "Could not add new authentication method because the user is not logged in."
-                        (Just authId) ->
-                            do update' acidAuth (AddAuthMethod (AuthFacebook (FacebookId facebookId)) authId)
-                               seeOther (T.unpack onAuthURL) (toResponse ())
-

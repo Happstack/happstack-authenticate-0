@@ -13,7 +13,6 @@ module Happstack.Auth.Core.Auth
     , initialAuthState
     , AuthToken(..)
     , AuthId(..)
-    , FacebookId(..)
     , AuthMethod(..)
     , AuthMethod_v1(..)
     , AuthMap(..)
@@ -33,7 +32,6 @@ module Happstack.Auth.Core.Auth
     , NewAuthMethod(..)
     , RemoveAuthIdentifier(..)
     , IdentifierAuthIds(..)
-    , FacebookAuthIds(..)
     , AddAuthUserPassId(..)
     , RemoveAuthUserPassId(..)
     , UserPassIdAuthIds(..)
@@ -68,7 +66,6 @@ import Data.Time.Clock               (UTCTime, addUTCTime, diffUTCTime, getCurre
 import qualified Data.Text           as Text
 import qualified Data.Text.Encoding  as Text
 import           Data.Text           (Text)
-import Facebook                      (UserId, Id(..))
 import Web.Authenticate.OpenId       (Identifier)
 import Web.Routes                    (PathInfo(..))
 import Happstack.Server              (Cookie(..), CookieLife(..), Happstack, Request(rqSecure), addCookie, askRq, expireCookie, lookCookieValue, mkCookie)
@@ -131,34 +128,6 @@ $(deriveSafeCopy 1 'base ''Identifier)
 
 -- * AuthMap
 
-newtype FacebookId_001 = FacebookId_001 { unFacebookId_001 :: Text }
-     deriving (Eq, Ord, Read, Show, Data, Typeable)
-
-instance SafeCopy FacebookId_001 where
-    kind = base
-    getCopy = contain $ (FacebookId_001 . Text.decodeUtf8) <$> safeGet
-    putCopy = contain . safePut . Text.encodeUtf8 . unFacebookId_001
-    errorTypeName _ = "FacebookId_001"
-
-newtype FacebookId_002 = FacebookId_002 { unFacebookId_002 :: B.ByteString }
-    deriving (Eq, Ord, Read, Show, Data, Typeable)
-$(deriveSafeCopy 2 'extension ''FacebookId_002)
-
-instance Migrate FacebookId_002 where
-    type MigrateFrom FacebookId_002 = FacebookId_001
-    migrate (FacebookId_001 fid) = FacebookId_002 (Text.encodeUtf8 fid)
-
-deriving instance Data Id
-$(deriveSafeCopy 0 'base ''Id)
-
-newtype FacebookId = FacebookId { unFacebookId :: UserId }
-    deriving (Eq, Ord, Read, Show, Data, Typeable)
-$(deriveSafeCopy 3 'extension ''FacebookId)
-
-instance Migrate FacebookId where
-    type MigrateFrom FacebookId = FacebookId_002
-    migrate (FacebookId_002 fid) = FacebookId (Id $ Text.decodeUtf8 fid)
-
 data AuthMethod_v1
     = AuthIdentifier_v1 { amIdentifier_v1 :: Identifier
                      }
@@ -173,8 +142,6 @@ data AuthMethod
                      }
     | AuthUserPassId { amUserPassId :: UserPassId
                      }
-    | AuthFacebook   { amFacebookId :: FacebookId
-                     }
     deriving (Eq, Ord, Read, Show, Data, Typeable)
 
 $(deriveSafeCopy 2 'extension ''AuthMethod)
@@ -185,7 +152,7 @@ instance Migrate AuthMethod where
     migrate (AuthUserPassId_v1 up)    = AuthUserPassId up
 
 
--- | This links an authentication method (such as on OpenId 'Identifier', a 'FacebookId', or 'UserPassId') to an 'AuthId'.
+-- | This links an authentication method (such as on OpenId 'Identifier', or 'UserPassId') to an 'AuthId'.
 data AuthMap
     = AuthMap { amMethod :: AuthMethod
               , amAuthId :: AuthId
@@ -194,7 +161,7 @@ data AuthMap
 
 $(deriveSafeCopy 1 'base ''AuthMap)
 
-$(inferIxSet "AuthMaps" ''AuthMap 'noCalcs [''AuthId, ''AuthMethod, ''Identifier, ''UserPassId, ''FacebookId])
+$(inferIxSet "AuthMaps" ''AuthMap 'noCalcs [''AuthId, ''AuthMethod, ''Identifier, ''UserPassId])
 
 -- * AuthToken
 
@@ -398,12 +365,6 @@ identifierAuthIds identifier =
     do as@(AuthState{..}) <- ask
        return $ Set.map amAuthId $ IxSet.toSet $ authMaps @= identifier
 
-facebookAuthIds :: FacebookId -> Query AuthState (Set AuthId)
-facebookAuthIds facebookId =
-    do as@(AuthState{..}) <- ask
-       return $ Set.map amAuthId $ IxSet.toSet $ authMaps @= facebookId
-
-
 addAuthUserPassId :: UserPassId -> AuthId -> Update AuthState ()
 addAuthUserPassId upid authid =
     do as@(AuthState{..}) <- get
@@ -498,7 +459,6 @@ $(makeAcidic ''AuthState [ 'askUserPass
                          , 'newAuthMethod
                          , 'removeAuthIdentifier
                          , 'identifierAuthIds
-                         , 'facebookAuthIds
                          , 'addAuthUserPassId
                          , 'removeAuthUserPassId
                          , 'userPassIdAuthIds

@@ -46,7 +46,6 @@ import qualified Data.Set         as Set
 import Data.Text                  (Text)
 import qualified Data.Text        as Text
 import Data.Time.Clock            (getCurrentTime)
-import Facebook                   (Credentials)
 import Happstack.Auth.Core.Auth
 import Happstack.Auth.Core.AuthParts
 import Happstack.Auth.Core.AuthURL
@@ -99,15 +98,14 @@ logoutPage authStateH =
                           a ! href url $ "here"
                           " to log in again."
 
-loginPage :: (MonadRoute m, URL m ~ AuthURL, Happstack m) => Maybe Credentials -> m Html
-loginPage mFacebook =
+loginPage :: (MonadRoute m, URL m ~ AuthURL, Happstack m) => m Html
+loginPage =
     do googleURL      <- H.toValue <$> showURL (A_OpenIdProvider LoginMode Google)
        yahooURL       <- H.toValue <$> showURL (A_OpenIdProvider LoginMode Yahoo)
        liveJournalURL <- H.toValue <$> showURL (A_OpenIdProvider LoginMode LiveJournal)
        myspaceURL     <- H.toValue <$> showURL (A_OpenIdProvider LoginMode Myspace)
        genericURL     <- H.toValue <$> showURL (A_OpenIdProvider LoginMode Generic)
        localURL       <- H.toValue <$> showURL A_Local
-       facebookURL    <- H.toValue <$> showURL (A_Facebook LoginMode)
        signupURL      <- H.toValue <$> showURL A_Signup
        return $ H.div ! A.id "happstack-authenticate" $ do
                   H.ol $ do
@@ -117,20 +115,17 @@ loginPage mFacebook =
                     H.li $ (a ! href myspaceURL     $ "Login") >> " with your Myspace account"
                     H.li $ (a ! href genericURL     $ "Login") >> " with your OpenId account"
                     H.li $ (a ! href localURL       $ "Login") >> " with a username and password"
-                    case mFacebook of
-                      (Just _) -> H.li $ (a ! href facebookURL $ "Login") >> " with your Facebook account"
-                      Nothing -> return ()
+                    return ()
                   H.p $ (a ! href signupURL $ "Create a New Account.")
 
-signupPage :: (MonadRoute m, URL m ~ AuthURL, Happstack m) => Maybe Credentials -> m Html
-signupPage mFacebook =
+signupPage :: (MonadRoute m, URL m ~ AuthURL, Happstack m) => m Html
+signupPage =
     do googleURL      <- H.toValue <$> showURL (A_OpenIdProvider LoginMode Google)
        yahooURL       <- H.toValue <$> showURL (A_OpenIdProvider LoginMode Yahoo)
        liveJournalURL <- H.toValue <$> showURL (A_OpenIdProvider LoginMode LiveJournal)
        myspaceURL     <- H.toValue <$> showURL (A_OpenIdProvider LoginMode Myspace)
        genericURL     <- H.toValue <$> showURL (A_OpenIdProvider LoginMode Generic)
        localURL       <- H.toValue <$> showURL A_CreateAccount
-       facebookURL    <- H.toValue <$> showURL (A_Facebook LoginMode)
        return $ H.div ! A.id "happstack-authenticate" $
                   H.ol $ do
                     H.li $ (a ! href googleURL      $ "Signup") >> " with your Google account"
@@ -139,19 +134,16 @@ signupPage mFacebook =
                     H.li $ (a ! href myspaceURL     $ "Signup") >> " with your Myspace account"
                     H.li $ (a ! href genericURL     $ "Signup") >> " with your OpenId account"
                     H.li $ (a ! href localURL       $ "Signup") >> " with a username and password"
-                    case mFacebook of
-                      (Just _) -> H.li $ (a ! href facebookURL $ "Signup") >> " with your Facebook account"
-                      Nothing -> return ()
+                    return ()
 
 
-addAuthPage :: (MonadRoute m, URL m ~ AuthURL, Happstack m) => Maybe Credentials -> m Html
-addAuthPage mFacebook =
+addAuthPage :: (MonadRoute m, URL m ~ AuthURL, Happstack m) => m Html
+addAuthPage =
     do googleURL      <- H.toValue <$> showURL (A_OpenIdProvider AddIdentifierMode Google)
        yahooURL       <- H.toValue <$> showURL (A_OpenIdProvider AddIdentifierMode Yahoo)
        liveJournalURL <- H.toValue <$> showURL (A_OpenIdProvider AddIdentifierMode LiveJournal)
        myspaceURL     <- H.toValue <$> showURL (A_OpenIdProvider AddIdentifierMode Myspace)
        genericURL     <- H.toValue <$> showURL (A_OpenIdProvider AddIdentifierMode Generic)
-       facebookURL    <- H.toValue <$> showURL (A_Facebook AddIdentifierMode)
        return $ H.div ! A.id "happstack-authenticate" $
                   H.ol $ do
                     H.li $ (a ! href googleURL      $ "Add") >> " your Google account"
@@ -159,9 +151,7 @@ addAuthPage mFacebook =
                     H.li $ (a ! href liveJournalURL $ "Add") >> " your Live Journal account"
                     H.li $ (a ! href myspaceURL     $ "Add") >> " your Myspace account"
                     H.li $ (a ! href genericURL     $ "Add") >> " your OpenId account"
-                    case mFacebook of
-                      (Just _) -> H.li $ (a ! href facebookURL $ "Add") >> " your Facebook account"
-                      Nothing -> return ()
+                    return ()
 
 authPicker :: (MonadRoute m, URL m ~ ProfileURL, Happstack m) => Set AuthId -> m Html
 authPicker authIds =
@@ -303,17 +293,16 @@ genericOpenIdPage appTemplate here authMode =
 handleAuth :: (Happstack m, MonadRoute m, URL m ~ AuthURL) =>
               AcidState AuthState -- ^ database handle for 'AuthState'
            -> (String -> Html -> Html -> m Response) -- ^ page template function
-           -> Maybe Credentials      -- ^ config information for facebook connect
            -> Maybe Text          -- ^ authentication realm
            -> Text                -- ^ URL to redirect to after succesful authentication
            -> AuthURL             -- ^ url to route
            -> m Response
-handleAuth authStateH appTemplate mFacebook realm onAuthURL url =
+handleAuth authStateH appTemplate realm onAuthURL url =
     case url of
-      A_Login           -> appTemplate "Login"    mempty =<< loginPage mFacebook
-      A_AddAuth         -> appTemplate "Add Auth" mempty =<< addAuthPage mFacebook
+      A_Login           -> appTemplate "Login"    mempty =<< loginPage
+      A_AddAuth         -> appTemplate "Add Auth" mempty =<< addAuthPage
       A_Logout          -> appTemplate "Logout"   mempty =<< logoutPage authStateH
-      A_Signup          -> appTemplate "Signup"   mempty =<< signupPage mFacebook
+      A_Signup          -> appTemplate "Signup"   mempty =<< signupPage
       A_Local           -> localLoginPage authStateH appTemplate url onAuthURL
       A_CreateAccount   -> createAccountPage authStateH appTemplate onAuthURL url
       A_ChangePassword  -> changePasswordPage authStateH appTemplate url
@@ -324,21 +313,6 @@ handleAuth authStateH appTemplate mFacebook realm onAuthURL url =
       (A_OpenIdProvider authMode provider)
                         -> providerPage appTemplate provider url authMode
 
-      (A_Facebook authMode)
-                        -> case mFacebook of
-                             Nothing -> do resp <- appTemplate "Facebook authentication not configured." mempty $
-                                                     H.div ! A.id "happstack-authenticate" $
-                                                      p "Facebook authentication not configured."
-                                           internalServerError resp
-                             (Just facebook) -> facebookPage facebook authMode
-
-      (A_FacebookRedirect authMode)
-                        -> case mFacebook of
-                             Nothing -> do resp <- appTemplate "Facebook authentication not configured." mempty $
-                                                     H.div ! A.id "happstack-authenticate" $
-                                                      p "Facebook authentication not configured."
-                                           internalServerError resp
-                             (Just facebook) -> facebookRedirectPage authStateH facebook onAuthURL authMode
 
 -- | Function which takes care of all 'ProfileURL' routes.
 --
@@ -388,12 +362,11 @@ authProfileSite :: (Happstack m) =>
                    AcidState AuthState
                 -> AcidState ProfileState
                 -> (String  -> Html -> Html -> m Response)
-                -> Maybe Credentials
                 -> Maybe Text
                 -> Text
                 -> Site AuthProfileURL (m Response)
-authProfileSite acidAuth acidProfile appTemplate mFacebook realm postPickedURL
-    = Site { handleSite = \f u -> unRouteT (handleAuthProfileRouteT acidAuth acidProfile appTemplate mFacebook realm postPickedURL u) f
+authProfileSite acidAuth acidProfile appTemplate realm postPickedURL
+    = Site { handleSite = \f u -> unRouteT (handleAuthProfileRouteT acidAuth acidProfile appTemplate realm postPickedURL u) f
            , formatPathSegments = \u -> (toPathSegments u, [])
            , parsePathSegments  = parseSegments fromPathSegments
            }
@@ -407,12 +380,11 @@ authProfileHandler :: (Happstack m) =>
                    -> AcidState AuthState                     -- ^ handle for 'AcidState AuthState'
                    -> AcidState ProfileState                  -- ^ handle for 'AcidState ProfileState'
                    -> (String  -> Html -> Html -> m Response) -- ^ template function used to render pages
-                   -> Maybe Credentials                       -- ^ optional Facebook 'Credentials'
                    -> Maybe Text                              -- ^ optional realm to use for @OpenId@ authentication
                    -> Text                                    -- ^ url to redirect to if authentication and profile selection is successful
                    -> m Response
-authProfileHandler baseURI pathPrefix acidAuth acidProfile appTemplate mFacebook realm postPickedURL =
-    do r <- implSite_ baseURI pathPrefix (authProfileSite acidAuth acidProfile appTemplate mFacebook realm postPickedURL)
+authProfileHandler baseURI pathPrefix acidAuth acidProfile appTemplate realm postPickedURL =
+    do r <- implSite_ baseURI pathPrefix (authProfileSite acidAuth acidProfile appTemplate realm postPickedURL)
        case r of
          (Left e) -> mzero
          (Right r) -> return r
@@ -421,30 +393,28 @@ handleAuthProfile :: forall m. (Happstack m, MonadRoute m, URL m ~ AuthProfileUR
                      AcidState AuthState
                   -> AcidState ProfileState
                   -> (String -> Html -> Html -> m Response)
-                  -> Maybe Credentials
                   -> Maybe Text
                   -> Text
                   -> AuthProfileURL
                   -> m Response
-handleAuthProfile authStateH profileStateH appTemplate mFacebook mRealm postPickedURL url =
+handleAuthProfile authStateH profileStateH appTemplate mRealm postPickedURL url =
     do routeFn <- askRouteFn
-       unRouteT (handleAuthProfileRouteT authStateH profileStateH appTemplate mFacebook mRealm postPickedURL url) routeFn
+       unRouteT (handleAuthProfileRouteT authStateH profileStateH appTemplate mRealm postPickedURL url) routeFn
 
 handleAuthProfileRouteT :: forall m. (Happstack m) =>
                      AcidState AuthState
                   -> AcidState ProfileState
                   -> (String -> Html -> Html -> m Response)
-                  -> Maybe Credentials
                   -> Maybe Text
                   -> Text
                   -> AuthProfileURL
                   -> RouteT AuthProfileURL m Response
-handleAuthProfileRouteT authStateH profileStateH appTemplate mFacebook mRealm postPickedURL url =
+handleAuthProfileRouteT authStateH profileStateH appTemplate mRealm postPickedURL url =
     case url of
       (AuthURL authURL) ->
           do onAuthURL <- showURL (ProfileURL P_PickProfile)
              let template t h b = liftRouteT (appTemplate t h b)
-             nestURL AuthURL $ handleAuth authStateH template mFacebook mRealm onAuthURL authURL
+             nestURL AuthURL $ handleAuth authStateH template mRealm onAuthURL authURL
       (ProfileURL profileURL) ->
           do let template t h b = liftRouteT (appTemplate t h b)
              nestURL ProfileURL $ handleProfile authStateH profileStateH template postPickedURL profileURL
