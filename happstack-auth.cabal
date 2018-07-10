@@ -36,7 +36,7 @@ Library
                        containers                   >= 0.4 && < 0.6,
                        ixset                        >= 1.0 && < 1.2,
                        happstack-server             >= 6.0 && < 7.6,
-                       http-conduit                 >= 1.4,
+                       http-conduit                 >= 2.3,
                        http-types                   >= 0.6,
                        safecopy                     >= 0.6,
                        mtl                          >= 2.0,

@@ -17,7 +17,7 @@ import qualified Data.Text.Lazy.Encoding as TL
 import Happstack.Server                  (Happstack, Response, lookPairsBS, lookText, seeOther, toResponse, internalServerError)
 import Happstack.Auth.Core.Auth
 import Happstack.Auth.Core.AuthURL
-import Network.HTTP.Conduit       (withManager)
+import Network.HTTP.Conduit       (newManager, tlsManagerSettings)
 import Web.Authenticate.OpenId    (Identifier, OpenIdResponse(..), authenticateClaimed, getForwardUrl)
 import Web.Routes
 
@@ -47,7 +47,7 @@ getIdentifier :: (Happstack m) => m Identifier
 getIdentifier =
     do pairs'      <- lookPairsBS
        let pairs = mapMaybe (\(k, ev) -> case ev of (Left _) -> Nothing ; (Right v) -> Just (T.pack k, TL.toStrict $ TL.decodeUtf8 v)) pairs'
-       oir <- liftIO $ withManager $ authenticateClaimed pairs
+       oir <- liftIO $ newManager tlsManagerSettings >>= authenticateClaimed pairs
        return (oirOpLocal oir)
 
 -- calling this will log you in as 1 or more AuthIds
@@ -72,7 +72,7 @@ connect :: (Happstack m, MonadRoute m, URL m ~ OpenIdURL) =>
            -> m Response
 connect authMode realm url =
     do openIdUrl <- showURL (O_OpenId authMode)
-       gotoURL <- liftIO $ withManager $ getForwardUrl url openIdUrl realm []
+       gotoURL <- liftIO $ newManager tlsManagerSettings >>= getForwardUrl url openIdUrl realm []
        seeOther (T.unpack gotoURL) (toResponse gotoURL)
 
 -- type ProviderPage m p = (OpenIdURL p) -> AuthMode -> m Response
