@@ -1,6 +1,7 @@
 module Happstack.Auth.Core.ProfileParts where
 
 import Control.Applicative (Alternative(..))
+import Control.Monad.Fail  (MonadFail)
 import Data.Acid           (AcidState)
 import Data.Acid.Advanced  (update', query')
 import           Data.Set  (Set)
@@ -17,7 +18,7 @@ import Web.Routes.Happstack
 
 -- can we pick an AuthId with only the information in the Auth stuff? Or should that be a profile action ?
 
-pickAuthId :: (Happstack m, Alternative m) => AcidState AuthState -> m (Either (Set AuthId) AuthId)
+pickAuthId :: (Happstack m, Alternative m, MonadFail m) => AcidState AuthState -> m (Either (Set AuthId) AuthId)
 pickAuthId authStateH =
     do (Just authToken) <- getAuthToken authStateH -- FIXME: Just
        case tokenAuthId authToken of
@@ -52,7 +53,7 @@ data PickProfile
     | PickPersonality (Set Profile)
     | PickAuthId      (Set AuthId)
 
-pickProfile :: (Happstack m, Alternative m) => AcidState AuthState -> AcidState ProfileState -> m PickProfile
+pickProfile :: (Happstack m, Alternative m, MonadFail m) => AcidState AuthState -> AcidState ProfileState -> m PickProfile
 pickProfile authStateH profileStateH =
     do eAid <- pickAuthId authStateH
        case eAid of

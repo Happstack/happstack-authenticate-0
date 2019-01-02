@@ -36,7 +36,8 @@ module Happstack.Auth.Blaze.Templates
 
 import Control.Applicative        (Alternative, (<*>), (<$>), (<*), (*>), optional)
 import Control.Monad              (replicateM, mplus, mzero)
-import Control.Monad.Trans        (MonadIO(liftIO))
+import Control.Monad.Fail         (MonadFail(fail))
+import Control.Monad.Trans        (MonadIO(liftIO), lift)
 import Data.Acid                  (AcidState)
 import Data.Acid.Advanced         (query', update')
 import Data.Maybe                 (mapMaybe)
@@ -54,6 +55,7 @@ import Happstack.Auth.Core.Profile
 import Happstack.Auth.Core.ProfileParts
 import Happstack.Auth.Core.AuthProfileURL (AuthProfileURL(..))
 import Happstack.Server            (Happstack, Input, Response, internalServerError, ok, seeOther, toResponse, unauthorized)
+import Prelude hiding (fail)
 import Text.Blaze.Html5            as H hiding (fieldset, ol, li, label, head)
 import qualified Text.Blaze.Html5  as H
 import Text.Blaze.Html5.Attributes as A hiding (label)
@@ -323,7 +325,7 @@ handleAuth authStateH appTemplate realm onAuthURL url =
 --  >    String -- ^ string to use in the <title> tag
 --  > -> Html   -- ^ extra headers to add to the <head> tag
 --  > -> Html   -- ^ contents to stick in the <body> tag
-handleProfile :: (Happstack m, Alternative m, MonadRoute m, URL m ~ ProfileURL) =>
+handleProfile :: (Happstack m, MonadFail m, Alternative m, MonadRoute m, URL m ~ ProfileURL) =>
                  AcidState AuthState    -- ^ database handle for 'AuthState'
               -> AcidState ProfileState -- ^ database handle for 'ProfileState'
               -> (String -> Html -> Html -> m Response) -- ^ page template function
@@ -358,7 +360,7 @@ handleProfile authStateH profileStateH appTemplate postPickedURL url =
 
 -- handleAuthProfile :: (Happstack m, Alternative m, MonadRoute m, URL m ~ AuthProfileURL) =>
 
-authProfileSite :: (Happstack m) =>
+authProfileSite :: (Happstack m, MonadFail m) =>
                    AcidState AuthState
                 -> AcidState ProfileState
                 -> (String  -> Html -> Html -> m Response)
@@ -374,7 +376,7 @@ authProfileSite acidAuth acidProfile appTemplate realm postPickedURL
 -- | this is a simple entry point into @happstack-authenticate@ that
 -- provides reasonable default behavior. A majority of the time you
 -- will just call this function.
-authProfileHandler :: (Happstack m) =>
+authProfileHandler :: (Happstack m, MonadFail m) =>
                       Text -- ^ baseURI for this server part
                    -> Text -- ^ unique path prefix
                    -> AcidState AuthState                     -- ^ handle for 'AcidState AuthState'
@@ -389,7 +391,7 @@ authProfileHandler baseURI pathPrefix acidAuth acidProfile appTemplate realm pos
          (Left e) -> mzero
          (Right r) -> return r
 
-handleAuthProfile :: forall m. (Happstack m, MonadRoute m, URL m ~ AuthProfileURL) =>
+handleAuthProfile :: forall m. (Happstack m, MonadFail m, MonadRoute m, URL m ~ AuthProfileURL) =>
                      AcidState AuthState
                   -> AcidState ProfileState
                   -> (String -> Html -> Html -> m Response)
@@ -401,7 +403,7 @@ handleAuthProfile authStateH profileStateH appTemplate mRealm postPickedURL url 
     do routeFn <- askRouteFn
        unRouteT (handleAuthProfileRouteT authStateH profileStateH appTemplate mRealm postPickedURL url) routeFn
 
-handleAuthProfileRouteT :: forall m. (Happstack m) =>
+handleAuthProfileRouteT :: forall m. (Happstack m, MonadFail m) =>
                      AcidState AuthState
                   -> AcidState ProfileState
                   -> (String -> Html -> Html -> m Response)
@@ -418,6 +420,9 @@ handleAuthProfileRouteT authStateH profileStateH appTemplate mRealm postPickedUR
       (ProfileURL profileURL) ->
           do let template t h b = liftRouteT (appTemplate t h b)
              nestURL ProfileURL $ handleProfile authStateH profileStateH template postPickedURL profileURL
+
+instance MonadFail m => MonadFail (RouteT ProfileURL m) where
+  fail = lift . fail
 
 localLoginPage authStateH appTemplate here onAuthURL =
     do actionURL <- showURL here
